@@ -1,0 +1,290 @@
+﻿using System.Collections.Generic;
+using System.IO;
+
+using Intersect.Config;
+
+using JetBrains.Annotations;
+
+using Newtonsoft.Json;
+
+namespace Intersect
+{
+
+    public class Options
+    {
+
+        //Caching Json
+        private static string optionsCompressed = "";
+
+        [JsonProperty("AdminOnly", Order = -3)]
+        protected bool _adminOnly = false;
+
+        //Constantly Animated Sprites
+        [JsonProperty("AnimatedSprites")] protected List<string> _animatedSprites = new List<string>();
+
+        [JsonProperty("BlockClientRegistrations", Order = -2)]
+        protected bool _blockClientRegistrations = false;
+
+        [JsonProperty("ValidPasswordResetTimeMinutes")]
+        protected ushort _passResetExpirationMin = 30;
+
+        [JsonProperty("OpenPortChecker", Order = 0)]
+        protected bool _portChecker = true;
+
+        [JsonProperty("UPnP", Order = -1)] protected bool _upnp = true;
+
+        [JsonProperty("Chat")] public ChatOptions ChatOpts = new ChatOptions();
+
+        [JsonProperty("Combat")] public CombatOptions CombatOpts = new CombatOptions();
+
+        [JsonProperty("Equipment")] public EquipmentOptions EquipmentOpts = new EquipmentOptions();
+
+        [JsonProperty("EventWatchdogKillThreshold")]
+        public int EventKillTheshhold = 5000;
+
+        public DatabaseOptions GameDatabase = new DatabaseOptions();
+
+        [JsonProperty("Map")] public MapOptions MapOpts = new MapOptions();
+
+        public DatabaseOptions PlayerDatabase = new DatabaseOptions();
+
+        [JsonProperty("Player")] public PlayerOptions PlayerOpts = new PlayerOptions();
+
+        [JsonProperty("Party")] public PartyOptions PartyOpts = new PartyOptions();
+
+        [JsonProperty("Security")] public SecurityOptions SecurityOpts = new SecurityOptions();
+
+        [JsonProperty("Loot")] public LootOptions LootOpts = new LootOptions();
+
+        public SpriteOptions Sprites = new SpriteOptions();
+
+        [JsonProperty("Npc")] public NpcOptions NpcOpts = new NpcOptions();
+
+        public SmtpSettings SmtpSettings = new SmtpSettings();
+
+        [NotNull]
+        public static Options Instance { get; private set; }
+
+        [JsonIgnore]
+        public bool SendingToClient { get; set; } = true;
+
+        //Public Getters
+        public static ushort ServerPort { get => Instance._serverPort; set => Instance._serverPort = value; }
+
+        public static int MaxStatValue => Instance.PlayerOpts.MaxStat;
+
+        public static int MaxLevel => Instance.PlayerOpts.MaxLevel;
+
+        public static int MaxInvItems => Instance.PlayerOpts.MaxInventory;
+
+        public static int MaxPlayerSkills => Instance.PlayerOpts.MaxSpells;
+
+        public static int MaxBankSlots => Instance.PlayerOpts.MaxBank;
+
+        public static int MaxCharacters => Instance.PlayerOpts.MaxCharacters;
+
+        public static int ItemDropChance => Instance.PlayerOpts.ItemDropChance;
+
+        public static int RequestTimeout => Instance.PlayerOpts.RequestTimeout;
+
+        public static int TradeRange => Instance.PlayerOpts.TradeRange;
+
+        public static int WeaponIndex => Instance.EquipmentOpts.WeaponSlot;
+
+        public static int ShieldIndex => Instance.EquipmentOpts.ShieldSlot;
+
+        public static List<string> EquipmentSlots => Instance.EquipmentOpts.Slots;
+
+        public static List<string>[] PaperdollOrder => Instance.EquipmentOpts.Paperdoll.Directions;
+
+        public static List<string> ToolTypes => Instance.EquipmentOpts.ToolTypes;
+
+        public static List<string> AnimatedSprites => Instance._animatedSprites;
+
+        public static int RegenTime => Instance.CombatOpts.RegenTime;
+
+        public static int CombatTime => Instance.CombatOpts.CombatTime;
+
+        public static int MinAttackRate => Instance.CombatOpts.MinAttackRate;
+
+        public static int MaxAttackRate => Instance.CombatOpts.MaxAttackRate;
+
+        public static int BlockingSlow => Instance.CombatOpts.BlockingSlow;
+
+        public static int MaxDashSpeed => Instance.CombatOpts.MaxDashSpeed;
+
+        public static int GameBorderStyle => Instance.MapOpts.GameBorderStyle;
+
+        public static bool ZDimensionVisible => Instance.MapOpts.ZDimensionVisible;
+
+        public static int MapWidth => Instance?.MapOpts?.Width ?? 32;
+
+        public static int MapHeight => Instance?.MapOpts?.Height ?? 26;
+
+        public static int TileWidth => Instance.MapOpts.TileWidth;
+
+        public static int TileHeight => Instance.MapOpts.TileHeight;
+
+        public static int EventWatchdogKillThreshhold => Instance.EventKillTheshhold;
+
+        public static int MaxChatLength => Instance.ChatOpts.MaxChatLength;
+
+        public static int MinChatInterval => Instance.ChatOpts.MinIntervalBetweenChats;
+
+        public static LootOptions Loot => Instance.LootOpts;
+
+        public static NpcOptions Npc => Instance.NpcOpts;
+
+        public static PartyOptions Party => Instance.PartyOpts;
+
+        public static bool UPnP => Instance._upnp;
+
+        public static bool OpenPortChecker => Instance._portChecker;
+
+        public static SmtpSettings Smtp => Instance.SmtpSettings;
+
+        public static int PasswordResetExpirationMinutes => Instance._passResetExpirationMin;
+
+        public static bool AdminOnly { get => Instance._adminOnly; set => Instance._adminOnly = value; }
+
+        public static bool BlockClientRegistrations
+        {
+            get => Instance._blockClientRegistrations;
+            set => Instance._blockClientRegistrations = value;
+        }
+
+        public static DatabaseOptions PlayerDb
+        {
+            get => Instance.PlayerDatabase;
+            set => Instance.PlayerDatabase = value;
+        }
+
+        public static DatabaseOptions GameDb
+        {
+            get => Instance.GameDatabase;
+            set => Instance.GameDatabase = value;
+        }
+
+        [NotNull]
+        public static PlayerOptions Player => Instance.PlayerOpts;
+
+        [NotNull]
+        public static EquipmentOptions Equipment => Instance.EquipmentOpts;
+
+        [NotNull]
+        public static CombatOptions Combat => Instance.CombatOpts;
+
+        [NotNull]
+        public static MapOptions Map => Instance.MapOpts;
+
+        public static bool Loaded => Instance != null;
+
+        [JsonProperty("GameName", Order = -5)]
+        public string GameName { get; set; } = DEFAULT_GAME_NAME;
+
+        [JsonProperty("ServerPort", Order = -4)]
+        public ushort _serverPort { get; set; } = DEFAULT_SERVER_PORT;
+
+        /// <summary>
+        /// Passability configuration by map zone
+        /// </summary>
+        [NotNull]
+        public Passability Passability { get; } = new Passability();
+
+        public bool SmtpValid { get; set; }
+
+        public static string OptionsData => optionsCompressed;
+
+        public void FixAnimatedSprites()
+        {
+            for (var i = 0; i < _animatedSprites.Count; i++)
+            {
+                _animatedSprites[i] = _animatedSprites[i].ToLower();
+            }
+        }
+
+        public static bool LoadFromDisk()
+        {
+            Instance = new Options();
+            if (!Directory.Exists("resources"))
+            {
+                Directory.CreateDirectory("resources");
+            }
+
+            if (File.Exists("resources/config.json"))
+            {
+                Instance = JsonConvert.DeserializeObject<Options>(File.ReadAllText("resources/config.json"));
+            }
+
+            Instance.SmtpValid = Instance.SmtpSettings.IsValid();
+            Instance.SendingToClient = false;
+            Instance.FixAnimatedSprites();
+            File.WriteAllText("resources/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
+            Instance.SendingToClient = true;
+            optionsCompressed = JsonConvert.SerializeObject(Instance);
+
+            return true;
+        }
+
+        public static void SaveToDisk()
+        {
+            Instance.SendingToClient = false;
+            File.WriteAllText("resources/config.json", JsonConvert.SerializeObject(Instance, Formatting.Indented));
+            Instance.SendingToClient = true;
+            optionsCompressed = JsonConvert.SerializeObject(Instance);
+        }
+
+        public static void LoadFromServer(string data)
+        {
+            Instance = JsonConvert.DeserializeObject<Options>(data);
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public bool ShouldSerializePlayerDatabase()
+        {
+            return !SendingToClient;
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public bool ShouldSerializeGameDatabase()
+        {
+            return !SendingToClient;
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public bool ShouldSerializeSmtpSettings()
+        {
+            return !SendingToClient;
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public bool ShouldSerializeSmtpValid()
+        {
+            return SendingToClient;
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public bool ShouldSerializeSecurityOpts()
+        {
+            return !SendingToClient;
+        }
+
+        #region Constants
+
+        // TODO: Clean these up
+        //Values that cannot easily be changed:
+        public const int LayerCount = 5;
+
+        public const int MaxStats = 5;
+
+        public const int MaxHotbar = 10;
+
+        public const string DEFAULT_GAME_NAME = "Intersect";
+
+        public const int DEFAULT_SERVER_PORT = 5400;
+
+        #endregion
+
+    }
+
+}
